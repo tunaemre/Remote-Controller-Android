@@ -17,7 +17,7 @@ public class AsyncSocketConnection {
 
     private volatile static AsyncSocketConnection instance = null;
 
-    public static AsyncSocketConnection getInstance(Context context) {
+    public static AsyncSocketConnection getInstance() {
         if (instance == null) {
             synchronized (AsyncSocketConnection.class) {
                 if (instance == null)

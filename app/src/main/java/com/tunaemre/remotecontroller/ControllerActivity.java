@@ -30,6 +30,10 @@ public class ControllerActivity extends CircularRevealActivity {
 
     private AlertDialog networkDialog = null;
 
+    public static void sendClipboardText(String data) {
+
+    }
+
     private NetworkChangeReceiver.NetworkListener networkListener = new NetworkChangeReceiver.NetworkListener() {
         @Override
         public void onChange(boolean isWifiConnected) {

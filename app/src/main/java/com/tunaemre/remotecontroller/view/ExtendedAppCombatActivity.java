@@ -42,7 +42,7 @@ public abstract class ExtendedAppCombatActivity extends AppCompatActivity {
     }
 
     public static void apply(AppCompatActivity activity) {
-        IExtendedAppCombatActivity interf = (IExtendedAppCombatActivity)activity.getClass().getAnnotation(IExtendedAppCombatActivity.class);
+        IExtendedAppCombatActivity interf = activity.getClass().getAnnotation(IExtendedAppCombatActivity.class);
         if (interf != null)
             apply(activity, interf);
     }

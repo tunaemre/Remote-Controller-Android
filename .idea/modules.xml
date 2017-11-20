@@ -4,7 +4,9 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/Remote-Controller-Android.iml" filepath="$PROJECT_DIR$/Remote-Controller-Android.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://C:\Users\T-EMRE\Workspace\Studio\Remote-Controller-Android\app\app.iml" filepath="C:\Users\T-EMRE\Workspace\Studio\Remote-Controller-Android\app\app.iml" />
       <module fileurl="file://$PROJECT_DIR$/barcodeReader/barcodeReader.iml" filepath="$PROJECT_DIR$/barcodeReader/barcodeReader.iml" />
+      <module fileurl="file://C:\Users\T-EMRE\Workspace\Studio\Remote-Controller-Android\barcodeReader\barcodeReader.iml" filepath="C:\Users\T-EMRE\Workspace\Studio\Remote-Controller-Android\barcodeReader\barcodeReader.iml" />
     </modules>
   </component>
 </project>
