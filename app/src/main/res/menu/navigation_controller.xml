@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/navigation_mousepad"
+        android:icon="@drawable/ic_touch_app_black_24px"
+        android:title="Mouse Pad" />
+
+    <item
+        android:id="@+id/navigation_mousegyro"
+        android:icon="@drawable/ic_screen_rotation_black_24px"
+        android:title="Gyro Mouse" />
+
+    <item
+        android:id="@+id/navigation_media"
+        android:icon="@drawable/ic_airplay_black_24px"
+        android:title="Media Control" />
+
+</menu>
