@@ -13,6 +13,7 @@ public class Cache {
     public Cache(Context context) {
         this.mPreference = context.getApplicationContext().getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
     }
+
     private volatile static Cache instance = null;
 
     public static Cache getInstance(Context context) {

@@ -12,9 +12,12 @@ import android.support.design.widget.BottomNavigationView;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 
+import com.tunaemre.remotecontroller.cache.Cache;
 import com.tunaemre.remotecontroller.fragment.MainIPFragment;
 import com.tunaemre.remotecontroller.fragment.MainQRFragment;
 import com.tunaemre.remotecontroller.network.NetworkChangeReceiver;
@@ -22,7 +25,7 @@ import com.tunaemre.remotecontroller.operator.PermissionOperator;
 import com.tunaemre.remotecontroller.view.ExtendedAppCombatActivity;
 import com.tunaemre.remotecontroller.view.IExtendedAppCombatActivity;
 
-@IExtendedAppCombatActivity(theme = IExtendedAppCombatActivity.ActivityTheme.LIGHT, customToolBar = R.id.toolbar)
+@IExtendedAppCombatActivity(theme = IExtendedAppCombatActivity.ActivityTheme.LIGHT, customToolBar = R.id.toolbar, titleRes = R.string.title_connect)
 public class MainActivity extends ExtendedAppCombatActivity {
 
     private static PermissionOperator permissionOperator = new PermissionOperator();
@@ -51,14 +54,29 @@ public class MainActivity extends ExtendedAppCombatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        getSupportActionBar().setTitle(R.string.title_connect);
-
         coordinatorLayout = (CoordinatorLayout) findViewById(R.id.coordinator);
 
         BottomNavigationView navigation = (BottomNavigationView) findViewById(R.id.navigation);
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
 
         prepareActivity();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.menu_calibration:
+                startActivity(new Intent(MainActivity.this, CalibrationActivity.class));
+                break;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     @Override
@@ -75,6 +93,9 @@ public class MainActivity extends ExtendedAppCombatActivity {
             });
             snackbar.show();
         }
+
+        if (Cache.getInstance(this).getTouchCalibration() == -1)
+            startActivity(new Intent(MainActivity.this, CalibrationActivity.class));
     }
 
     @Override

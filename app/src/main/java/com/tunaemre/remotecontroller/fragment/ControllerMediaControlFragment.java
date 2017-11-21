@@ -87,7 +87,7 @@ public class ControllerMediaControlFragment extends Fragment {
             JSONObject object = new JSONObject();
             object.put("Action", action);
 
-            AsyncSocketConnection.getInstance(getContext()).runSocketConnection(activity.ipNumber, activity.portNumber, object.toString(), new AsyncSocketConnection.ResultListener() {
+            AsyncSocketConnection.getInstance().runSocketConnection(activity.ipNumber, activity.portNumber, object.toString(), new AsyncSocketConnection.ResultListener() {
                 @Override
                 public void onStart() {
                     activity.showCommandIndicator();

@@ -12,12 +12,13 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.animation.AnimationUtils;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 
 import com.tunaemre.remotecontroller.ControllerActivity;
 import com.tunaemre.remotecontroller.R;
+import com.tunaemre.remotecontroller.cache.Cache;
+import com.tunaemre.remotecontroller.hardware.Vibrate;
 import com.tunaemre.remotecontroller.listener.ScrollListener;
 import com.tunaemre.remotecontroller.network.AsyncSocketConnection;
 
@@ -29,9 +30,11 @@ public class ControllerMousePadFragment extends Fragment {
 
     private RelativeLayout layout = null;
 
-    private int touchpadXSize = 0, touchpadYSize = 0;
+    private int touchpadWidth = 0, touchpadHeight = 0;
 
+    private float hardPressPressure = Cache.getInstance(getContext()).getTouchCalibration();
     private boolean isMoving = false;
+    private boolean isHardPressed = false;
     private boolean isClicking = false;
 
     private int lastXPosition = -1;
@@ -93,14 +96,21 @@ public class ControllerMousePadFragment extends Fragment {
 //					    	SendMoveAction((int) event.getX(), (int) event.getY());
 //					    	lastTouchMilisecond = (new Date()).getTime();
 //					    }
-                        if (event.getPressure() < 0.7F)
-                            sendRelativeMoveAction((int) event.getX(), (int) event.getY());
-                        else
+
+                        boolean tempIsHardPressed = event.getPressure() >= hardPressPressure;
+
+                        if (!isHardPressed && tempIsHardPressed)
+                            Vibrate.getInstance(getContext()).makeSingleHapticFeedback();
+
+                        if (isHardPressed)
                             sendRelativeDragAction((int) event.getX(), (int) event.getY());
+                        else
+                            sendRelativeMoveAction((int) event.getX(), (int) event.getY());
                         return true;
 
                     case MotionEvent.ACTION_UP:
                         isMoving = false;
+                        isHardPressed = false;
                         lastXPosition = -1;
                         lastYPosition = -1;
                         return false;
@@ -140,6 +150,7 @@ public class ControllerMousePadFragment extends Fragment {
             public void onClick(View v)
             {
                 sendButtonAction("Left");
+                Vibrate.getInstance(getContext()).makeSingleHapticFeedback();
             }
         });
 
@@ -149,6 +160,7 @@ public class ControllerMousePadFragment extends Fragment {
             public void onClick(View v)
             {
                 sendButtonAction("Right");
+                Vibrate.getInstance(getContext()).makeDoubleHapticFeedback();
             }
         });
 
@@ -204,9 +216,9 @@ public class ControllerMousePadFragment extends Fragment {
         try {
             JSONObject object = new JSONObject();
             object.put("Action", "ScreenRecognize");
-            object.put("X", touchpadXSize);
-            object.put("Y", touchpadYSize);
-            AsyncSocketConnection.getInstance(getContext()).runSocketConnection(activity.ipNumber, activity.portNumber, object.toString(), new AsyncSocketConnection.ResultListener() {
+            object.put("X", touchpadWidth);
+            object.put("Y", touchpadHeight);
+            AsyncSocketConnection.getInstance().runSocketConnection(activity.ipNumber, activity.portNumber, object.toString(), new AsyncSocketConnection.ResultListener() {
 
                 @Override
                 public void onStart() {}
@@ -248,7 +260,7 @@ public class ControllerMousePadFragment extends Fragment {
             lastXPosition = x;
             lastYPosition = y;
 
-            AsyncSocketConnection.getInstance(getContext()).runSocketConnection(activity.ipNumber, activity.portNumber, object.toString(), new AsyncSocketConnection.ResultListener() {
+            AsyncSocketConnection.getInstance().runSocketConnection(activity.ipNumber, activity.portNumber, object.toString(), new AsyncSocketConnection.ResultListener() {
                 @Override
                 public void onStart() {
                     activity.showCommandIndicator();
@@ -291,7 +303,7 @@ public class ControllerMousePadFragment extends Fragment {
             lastXPosition = x;
             lastYPosition = y;
 
-            AsyncSocketConnection.getInstance(getContext()).runSocketConnection(activity.ipNumber, activity.portNumber, object.toString(), new AsyncSocketConnection.ResultListener() {
+            AsyncSocketConnection.getInstance().runSocketConnection(activity.ipNumber, activity.portNumber, object.toString(), new AsyncSocketConnection.ResultListener() {
                 @Override
                 public void onStart() {
                     activity.showCommandIndicator();
@@ -325,7 +337,7 @@ public class ControllerMousePadFragment extends Fragment {
             object.put("Action", "MouseClick");
             object.put("Button", button);
 
-            AsyncSocketConnection.getInstance(getContext()).runSocketConnection(activity.ipNumber, activity.portNumber, object.toString(), new AsyncSocketConnection.ResultListener() {
+            AsyncSocketConnection.getInstance().runSocketConnection(activity.ipNumber, activity.portNumber, object.toString(), new AsyncSocketConnection.ResultListener() {
                 @Override
                 public void onStart() {
                     activity.showCommandIndicator();
@@ -359,7 +371,7 @@ public class ControllerMousePadFragment extends Fragment {
             object.put("Direction", direction);
             object.put("Amount", amount);
 
-            AsyncSocketConnection.getInstance(getContext()).runSocketConnection(activity.ipNumber, activity.portNumber, object.toString(), new AsyncSocketConnection.ResultListener() {
+            AsyncSocketConnection.getInstance().runSocketConnection(activity.ipNumber, activity.portNumber, object.toString(), new AsyncSocketConnection.ResultListener() {
                 @Override
                 public void onStart() {
                     activity.showCommandIndicator();
@@ -399,10 +411,10 @@ public class ControllerMousePadFragment extends Fragment {
                     @Override
                     public boolean onPreDraw()
                     {
-                        touchpadXSize = mTouchpad.getMeasuredHeight();
-                        touchpadYSize = mTouchpad.getMeasuredWidth();
+                        touchpadWidth = mTouchpad.getMeasuredHeight();
+                        touchpadHeight = mTouchpad.getMeasuredWidth();
 
-                        return (touchpadXSize != 0 && touchpadYSize != 0);
+                        return (touchpadWidth != 0 && touchpadHeight != 0);
                     }
                 });
 
@@ -411,7 +423,7 @@ public class ControllerMousePadFragment extends Fragment {
 
             protected void onPostExecute(Boolean result)
             {
-                if (touchpadXSize == 0 || touchpadYSize == 0)
+                if (touchpadWidth == 0 || touchpadHeight == 0)
                     execute();
                 else
                     touchPadListener();

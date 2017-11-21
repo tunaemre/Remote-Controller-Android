@@ -105,7 +105,7 @@ public class ControllerActivity extends CircularRevealActivity {
         setContentView(R.layout.activity_controller);
 
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        getSupportActionBar().setDisplayShowTitleEnabled(true);
+        getSupportActionBar().setDisplayShowHomeEnabled(false);
 
         coordinatorLayout = (CoordinatorLayout) findViewById(R.id.coordinator);
         progressLayout =  findViewById(R.id.layoutProgress);
@@ -185,7 +185,7 @@ public class ControllerActivity extends CircularRevealActivity {
         try {
             JSONObject object = new JSONObject();
             object.put("Action", "Hello");
-            AsyncSocketConnection.getInstance(getBaseContext()).runSocketConnection(ipNumber, portNumber, object.toString(), new AsyncSocketConnection.ResultListener() {
+            AsyncSocketConnection.getInstance().runSocketConnection(ipNumber, portNumber, object.toString(), new AsyncSocketConnection.ResultListener() {
 
                 @Override
                 public void onStart() {
@@ -236,7 +236,7 @@ public class ControllerActivity extends CircularRevealActivity {
         try {
             JSONObject object = new JSONObject();
             object.put("Action", "Goodbye");
-            AsyncSocketConnection.getInstance(getBaseContext()).runSocketConnection(ipNumber, portNumber, object.toString());
+            AsyncSocketConnection.getInstance().runSocketConnection(ipNumber, portNumber, object.toString());
         }
         catch (Exception e) {
             e.printStackTrace();

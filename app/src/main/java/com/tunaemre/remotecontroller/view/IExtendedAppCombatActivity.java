@@ -17,6 +17,7 @@ public @interface IExtendedAppCombatActivity {
     ActivityTheme theme() default ActivityTheme.DARK;
 
     String title() default "";
+    int titleRes() default -1;
 
     int customToolBar() default -1;
 }
