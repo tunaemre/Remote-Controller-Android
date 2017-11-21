@@ -42,7 +42,7 @@ public abstract class ExtendedAppCombatActivity extends AppCompatActivity {
     }
 
     public static void apply(AppCompatActivity activity) {
-        IExtendedAppCombatActivity interf = (IExtendedAppCombatActivity)activity.getClass().getAnnotation(IExtendedAppCombatActivity.class);
+        IExtendedAppCombatActivity interf = activity.getClass().getAnnotation(IExtendedAppCombatActivity.class);
         if (interf != null)
             apply(activity, interf);
     }
@@ -84,7 +84,7 @@ public abstract class ExtendedAppCombatActivity extends AppCompatActivity {
             }
         }
 
-        if (interf.customToolBar() != -1 || !TextUtils.isEmpty(interf.title())) {
+        if (interf.customToolBar() != -1 || !TextUtils.isEmpty(interf.title()) || interf.titleRes() != -1) {
             mOnSetContentViewListener = new onSetContentViewListener() {
                 @Override
                 public void onSet() {
@@ -96,6 +96,8 @@ public abstract class ExtendedAppCombatActivity extends AppCompatActivity {
                     //Title
                     if (!TextUtils.isEmpty(interf.title()))
                         activity.getSupportActionBar().setTitle(interf.title());
+                    else if (interf.titleRes() != -1)
+                        activity.getSupportActionBar().setTitle(interf.titleRes());
                 }
             };
 

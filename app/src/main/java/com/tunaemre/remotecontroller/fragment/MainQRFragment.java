@@ -12,6 +12,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.RelativeLayout;
+import android.widget.Toast;
 
 import com.google.android.gms.samples.vision.barcodereader.BarcodeCapture;
 import com.google.android.gms.samples.vision.barcodereader.BarcodeGraphic;
@@ -20,6 +21,8 @@ import com.google.android.gms.vision.barcode.Barcode;
 import com.tunaemre.remotecontroller.ControllerActivity;
 import com.tunaemre.remotecontroller.R;
 import com.tunaemre.remotecontroller.operator.PermissionOperator;
+
+import org.json.JSONObject;
 
 import java.util.List;
 
@@ -50,9 +53,19 @@ public class MainQRFragment extends Fragment {
                 {
                     String barcodeData = barcode.displayValue;
 
-                    Intent intent = new Intent(getActivity(), ControllerActivity.class);
-                    intent.putExtra("ip", "1.1.1.1");
-                    startActivity(intent);
+                    try
+                    {
+                        JSONObject barcodeObj = new JSONObject(barcodeData);
+                        Intent intent = new Intent(getActivity(), ControllerActivity.class);
+                        intent.putExtra("ip", barcodeObj.getString("IP"));
+                        startActivity(intent);
+                    }
+                    catch (Exception e)
+                    {
+                        e.printStackTrace();
+                        Toast.makeText(getContext(), "An error occurred.", Toast.LENGTH_LONG).show();
+                        return;
+                    }
                 }
 
                 @Override
