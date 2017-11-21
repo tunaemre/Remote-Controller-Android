@@ -51,39 +51,88 @@
             android:scrollbars="none"/>
     </RelativeLayout>
 
+    <RelativeLayout
+        android:id="@+id/keyboardLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/buttonsLayout"
+        android:layout_alignParentTop="true"
+        android:clickable="true"
+        android:visibility="gone">
+
+        <EditText
+            android:id="@+id/editText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
+            android:ems="10"
+            android:inputType="text"
+            android:imeOptions="actionSend"/>
+
+        <android.support.design.widget.FloatingActionButton
+            android:id="@+id/floatingActionButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentRight="true"
+            android:clickable="true"
+            android:focusable="true"
+            app:srcCompat="@drawable/ic_send_white_24px"
+            app:fabSize="normal"
+            android:layout_marginBottom="@dimen/activity_vertical_margin"/>
+    </RelativeLayout>
+
     <LinearLayout
         android:id="@+id/buttonsLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_marginTop="@dimen/activity_vertical_margin"
-        android:visibility="visible">
+        android:visibility="visible"
+        android:orientation="vertical">
 
-        <Button
-            android:id="@+id/btnLeftButton"
-            android:layout_width="0dp"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginRight="8dp"
-            android:layout_weight="2"
-            android:background="@drawable/img_clickable" />
+            android:orientation="horizontal">
+            <Button
+                android:id="@+id/btnLeftButton"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_marginRight="8dp"
+                android:layout_weight="2"
+                android:background="@drawable/img_clickable" />
 
-        <Button
-            android:id="@+id/btnRightButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="8dp"
-            android:layout_marginRight="8dp"
-            android:layout_weight="2"
-            android:background="@drawable/img_clickable" />
+            <Button
+                android:id="@+id/btnRightButton"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_marginLeft="8dp"
+                android:layout_marginRight="8dp"
+                android:layout_weight="2"
+                android:background="@drawable/img_clickable" />
+
+            <ImageButton
+                android:id="@+id/btnScrollButton"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_marginLeft="8dp"
+                android:layout_weight="1"
+                android:background="@drawable/img_clickable"
+                app:srcCompat="@drawable/ic_swap_vert_white_24px" />
+
+        </LinearLayout>
 
         <ImageButton
-            android:id="@+id/btnScrollButton"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_marginLeft="8dp"
-            android:layout_weight="1"
+            android:id="@+id/btnKeyboardButton"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
             android:background="@drawable/img_clickable"
-            app:srcCompat="@drawable/ic_swap_vert_white_24px" />
-
+            app:srcCompat="@drawable/ic_keyboard_white_24px"
+            android:layout_marginTop="@dimen/activity_vertical_margin"/>
     </LinearLayout>
+
 </RelativeLayout>

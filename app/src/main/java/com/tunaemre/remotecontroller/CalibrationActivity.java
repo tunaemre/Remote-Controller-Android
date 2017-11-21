@@ -1,11 +1,13 @@
 package com.tunaemre.remotecontroller;
 
+import android.animation.TimeInterpolator;
 import android.animation.ValueAnimator;
 import android.os.Bundle;
 import android.support.design.widget.BottomNavigationView;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ProgressBar;
@@ -40,7 +42,7 @@ public class CalibrationActivity extends ExtendedAppCombatActivity {
         setContentView(R.layout.activity_calibration);
 
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        getSupportActionBar().setDisplayShowHomeEnabled(false);
+        getSupportActionBar().setDisplayShowHomeEnabled(true);
         getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_close_black_24px);
 
         coordinatorLayout = (CoordinatorLayout) findViewById(R.id.coordinator);
@@ -48,6 +50,14 @@ public class CalibrationActivity extends ExtendedAppCombatActivity {
         txtCalibration = (TextView) findViewById(R.id.txtCalibration);
 
         prepareActivity();
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem menuItem) {
+        if (menuItem.getItemId() == android.R.id.home) {
+            finish();
+        }
+        return super.onOptionsItemSelected(menuItem);
     }
 
     @Override
@@ -67,7 +77,7 @@ public class CalibrationActivity extends ExtendedAppCombatActivity {
                         stopProgressBar();
                         return false;
                     default:
-                        addPressure(currentStep == 0, event.getPressure());
+                        addPressure(currentStep == 0, event.getSize());
                 }
                 return false;
             }
@@ -89,36 +99,36 @@ public class CalibrationActivity extends ExtendedAppCombatActivity {
             findViewById(R.id.touchpadLayout).setOnTouchListener(null);
             txtCalibration.setText("Completed.");
 
+            float sumOfSoftPress = 0;
+            for (float pressure : softPressList)
+                sumOfSoftPress += pressure;
+
+            float avgSoftPress = sumOfSoftPress / softPressList.size();
+
+            float maxHardPress = 0;
+            for (float pressure : hardPressList)
+                if (pressure > maxHardPress) maxHardPress = pressure;
+
+            float calcHardPress = ((maxHardPress - avgSoftPress) * 3 / 4) + avgSoftPress;
+
+            Log.e("Calibration", "avgSoftPress:" + avgSoftPress);
+            Log.e("Calibration", "maxHardPress:" + maxHardPress);
+            Log.e("Calibration", "calcHardPress:" + calcHardPress);
+
+            Cache.getInstance(CalibrationActivity.this).setTouchCalibration(calcHardPress);
+
             Snackbar.make(coordinatorLayout, "Calibration completed.", Snackbar.LENGTH_INDEFINITE)
                     .setAction("OK", new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    float sumOfSoftPress = 0;
-                    for (float pressure : softPressList)
-                        sumOfSoftPress += pressure;
-
-                    float avgSoftPress = sumOfSoftPress / softPressList.size();
-
-                    float maxHardPress = 0;
-                    for (float pressure : hardPressList)
-                        if (pressure > maxHardPress) maxHardPress = pressure;
-
-                    float calcHardPress = ((maxHardPress - avgSoftPress) * 3 / 4) + avgSoftPress;
-
-                    Log.e("Calibration", "avgSoftPress:" + avgSoftPress);
-                    Log.e("Calibration", "maxHardPress:" + maxHardPress);
-                    Log.e("Calibration", "calcHardPress:" + calcHardPress);
-
-                    Cache.getInstance(CalibrationActivity.this).setTouchCalibration(calcHardPress);
-
                     finish();
                 }
             }).show();
         }
     }
 
-    private void addPressure(boolean isHardPresss, float pressure) {
-        if (isHardPresss)
+    private void addPressure(boolean isHardPress, float pressure) {
+        if (isHardPress)
             hardPressList.add(pressure);
         else
             softPressList.add(pressure);

@@ -49,6 +49,22 @@ public class MainActivity extends ExtendedAppCombatActivity {
         }
     };
 
+    private static String pendingDataToSend = null;
+
+    private static void setPendingDataToSend(String data) {
+        pendingDataToSend = data;
+    }
+
+    public static boolean isPendingDataToSend() {
+        return pendingDataToSend != null;
+    }
+
+    public static String getPendingDataToSend() {
+        String temp = pendingDataToSend;
+        pendingDataToSend = null;
+        return temp;
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -67,6 +83,22 @@ public class MainActivity extends ExtendedAppCombatActivity {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.menu_main, menu);
         return true;
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (getIntent().hasExtra("data")) {
+            setPendingDataToSend(getIntent().getExtras().getString("data"));
+            Snackbar.make(coordinatorLayout, "Connect before send to PC.", Snackbar.LENGTH_LONG).show();
+            getIntent().removeExtra("data");
+        }
     }
 
     @Override

@@ -1,19 +1,27 @@
 package com.tunaemre.remotecontroller.fragment;
 
+import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.animation.AnimationUtils;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 
 import com.tunaemre.remotecontroller.ControllerActivity;
 import com.tunaemre.remotecontroller.R;
@@ -32,7 +40,6 @@ public class ControllerMousePadFragment extends Fragment {
 
     private int touchpadWidth = 0, touchpadHeight = 0;
 
-    private float hardPressPressure = Cache.getInstance(getContext()).getTouchCalibration();
     private boolean isMoving = false;
     private boolean isHardPressed = false;
     private boolean isClicking = false;
@@ -42,8 +49,11 @@ public class ControllerMousePadFragment extends Fragment {
 
     public boolean isScreenRecognized = false;
 
-    private View touchpadLayout, scrollLayout, btnLeft, btnRight, btnScroll;
+    private View touchpadLayout, scrollLayout, keyboardLayout, btnLeft, btnRight;
+    private ImageButton btnScroll, btnKeyboard;
     private RecyclerView verticalRecycler, horizontalRecycler;
+    private EditText editText;
+    private FloatingActionButton fab;
 
     @Nullable
     @Override
@@ -59,9 +69,11 @@ public class ControllerMousePadFragment extends Fragment {
 
         touchpadLayout = layout.findViewById(R.id.touchpadLayout);
         scrollLayout = layout.findViewById(R.id.scrollLayout);
+        keyboardLayout = layout.findViewById(R.id.keyboardLayout);
         btnLeft = layout.findViewById(R.id.btnLeftButton);
         btnRight = layout.findViewById(R.id.btnRightButton);
-        btnScroll = layout.findViewById(R.id.btnScrollButton);
+        btnScroll = (ImageButton) layout.findViewById(R.id.btnScrollButton);
+        btnKeyboard = (ImageButton) layout.findViewById(R.id.btnKeyboardButton);
 
         verticalRecycler = (RecyclerView) layout.findViewById(R.id.scrollVerticalRecycler);
         horizontalRecycler = (RecyclerView) layout.findViewById(R.id.scrollHorizontalRecycler);
@@ -72,11 +84,16 @@ public class ControllerMousePadFragment extends Fragment {
         verticalRecycler.setAdapter(new ScrollRecyclerAdapter());
         horizontalRecycler.setAdapter(new ScrollRecyclerAdapter());
 
+        editText = (EditText) layout.findViewById(R.id.editText);
+        fab = (FloatingActionButton) layout.findViewById(R.id.floatingActionButton);
+
         new GetTouchpadSizeService(layout.findViewById(R.id.touchpadLayout)).execute();
     }
 
     private void touchPadListener()
     {
+        final float hardPressPressure = Cache.getInstance(getContext()).getTouchCalibration();
+
         View.OnTouchListener touchListener = new View.OnTouchListener()
         {
             @Override
@@ -89,19 +106,13 @@ public class ControllerMousePadFragment extends Fragment {
 
                     case MotionEvent.ACTION_MOVE:
                         isMoving = true;
-//					    lastTouchMilisecond = 0;
 
-//					    if ((new Date()).getTime() - lastTouchMilisecond > 25)
-//					    {
-//					    	SendMoveAction((int) event.getX(), (int) event.getY());
-//					    	lastTouchMilisecond = (new Date()).getTime();
-//					    }
-
-                        boolean tempIsHardPressed = event.getPressure() >= hardPressPressure;
+                        boolean tempIsHardPressed = event.getSize() >= hardPressPressure;
 
                         if (!isHardPressed && tempIsHardPressed)
                             Vibrate.getInstance(getContext()).makeSingleHapticFeedback();
 
+                        isHardPressed = tempIsHardPressed;
                         if (isHardPressed)
                             sendRelativeDragAction((int) event.getX(), (int) event.getY());
                         else
@@ -141,8 +152,8 @@ public class ControllerMousePadFragment extends Fragment {
         };
 
         touchpadLayout.setOnTouchListener(touchListener);
-        //((RelativeLayout) findViewById(R.id.touchpadLayout)).setOnClickListener(clickListener);
-        //((RelativeLayout) findViewById(R.id.touchpadLayout)).setOnLongClickListener(longClickListener);
+        touchpadLayout.setOnClickListener(clickListener);
+        touchpadLayout.setOnLongClickListener(longClickListener);
 
         btnLeft.setOnClickListener(new View.OnClickListener()
         {
@@ -168,7 +179,7 @@ public class ControllerMousePadFragment extends Fragment {
 
             @Override
             public void onClick(View v) {
-                if (touchpadLayout.getVisibility() == View.VISIBLE) {
+                if (scrollLayout.getVisibility() == View.GONE) {
                     verticalRecycler.scrollToPosition(Integer.MAX_VALUE / 2);
                     horizontalRecycler.scrollToPosition(Integer.MAX_VALUE / 2);
 
@@ -176,6 +187,8 @@ public class ControllerMousePadFragment extends Fragment {
                     scrollLayout.clearAnimation();
                     scrollLayout.setAnimation(AnimationUtils.loadAnimation(getContext(), android.R.anim.fade_in));
                     scrollLayout.setVisibility(View.VISIBLE);
+                    btnScroll.setImageResource(R.drawable.ic_touch_app_white_24px);
+                    btnKeyboard.setEnabled(false);
                 }
                 else
                 {
@@ -183,6 +196,35 @@ public class ControllerMousePadFragment extends Fragment {
                     touchpadLayout.clearAnimation();
                     touchpadLayout.setAnimation(AnimationUtils.loadAnimation(getContext(), android.R.anim.fade_in));
                     touchpadLayout.setVisibility(View.VISIBLE);
+                    btnScroll.setImageResource(R.drawable.ic_swap_vert_white_24px);
+                    btnKeyboard.setEnabled(true);
+                }
+            }
+        });
+
+        btnKeyboard.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                if (keyboardLayout.getVisibility() == View.GONE) {
+
+                    touchpadLayout.setVisibility(View.GONE);
+                    keyboardLayout.clearAnimation();
+                    keyboardLayout.setAnimation(AnimationUtils.loadAnimation(getContext(), android.R.anim.fade_in));
+                    keyboardLayout.setVisibility(View.VISIBLE);
+                    btnKeyboard.setImageResource(R.drawable.ic_keyboard_hide_white_24px);
+                    btnScroll.setEnabled(false);
+                    ((InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE)).toggleSoftInput(InputMethodManager.SHOW_FORCED,0);
+                    editText.requestFocus();
+                }
+                else
+                {
+                    keyboardLayout.setVisibility(View.GONE);
+                    touchpadLayout.clearAnimation();
+                    touchpadLayout.setAnimation(AnimationUtils.loadAnimation(getContext(), android.R.anim.fade_in));
+                    touchpadLayout.setVisibility(View.VISIBLE);
+                    btnKeyboard.setImageResource(R.drawable.ic_keyboard_white_24px);
+                    btnScroll.setEnabled(true);
                 }
             }
         });
@@ -206,6 +248,26 @@ public class ControllerMousePadFragment extends Fragment {
             @Override
             public void onScrolledVertical(int dy) { }
         }));
+
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                sendTextAction(editText.getText().toString());
+                editText.setText(null);
+                btnKeyboard.performClick();
+            }
+        });
+
+        editText.setOnEditorActionListener(new EditText.OnEditorActionListener() {
+                    @Override
+                    public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                        if (actionId == EditorInfo.IME_ACTION_SEND) {
+                            fab.performClick();
+                            return true;
+                        }
+                        return false;
+                    }
+                });
 
         if (activity.isConnected)
             sendScreenRecognizer();
@@ -370,6 +432,39 @@ public class ControllerMousePadFragment extends Fragment {
             object.put("Action", "Scroll");
             object.put("Direction", direction);
             object.put("Amount", amount);
+
+            AsyncSocketConnection.getInstance().runSocketConnection(activity.ipNumber, activity.portNumber, object.toString(), new AsyncSocketConnection.ResultListener() {
+                @Override
+                public void onStart() {
+                    activity.showCommandIndicator();
+                }
+
+                @Override
+                public void onResult(AsyncSocketConnection.SocketConnectionResult result) {
+                    activity.hideCommandIndicator();
+                }
+            });
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void sendTextAction(String text)
+    {
+        if (!activity.isConnected)
+            return;
+
+        if (!isScreenRecognized) {
+            sendScreenRecognizer();
+            return;
+        }
+
+        try
+        {
+            JSONObject object = new JSONObject();
+            object.put("Action", "Text");
+            object.put("Data", text);
 
             AsyncSocketConnection.getInstance().runSocketConnection(activity.ipNumber, activity.portNumber, object.toString(), new AsyncSocketConnection.ResultListener() {
                 @Override

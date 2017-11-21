@@ -3,6 +3,7 @@ package com.tunaemre.remotecontroller;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
 import android.support.design.widget.CoordinatorLayout;
@@ -11,6 +12,7 @@ import android.support.v7.app.AlertDialog;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.animation.AnimationUtils;
+import android.widget.Toast;
 
 import com.tunaemre.remotecontroller.fragment.ControllerGyroMouseFragment;
 import com.tunaemre.remotecontroller.fragment.ControllerMediaControlFragment;
@@ -25,14 +27,12 @@ import org.json.JSONObject;
 @IExtendedAppCombatActivity(theme = IExtendedAppCombatActivity.ActivityTheme.LIGHT, customToolBar = R.id.toolbar)
 public class ControllerActivity extends CircularRevealActivity {
 
+    private boolean onBackPressedHook = false;
+
     private CoordinatorLayout coordinatorLayout;
     private View progressLayout;
 
     private AlertDialog networkDialog = null;
-
-    public static void sendClipboardText(String data) {
-
-    }
 
     private NetworkChangeReceiver.NetworkListener networkListener = new NetworkChangeReceiver.NetworkListener() {
         @Override
@@ -73,10 +73,10 @@ public class ControllerActivity extends CircularRevealActivity {
         }
     };
 
-    public String ipNumber = null;
-    public final int portNumber = 13000;
+    public static String ipNumber = null;
+    public static final int portNumber = 13000;
 
-    public boolean isConnected = false;
+    public static boolean isConnected = false;
 
     private View imgCommandIndicator = null;
     private int commandIndicatorVisibility = 0;
@@ -115,6 +115,29 @@ public class ControllerActivity extends CircularRevealActivity {
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
 
         prepareActivity();
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem menuItem) {
+        if (menuItem.getItemId() == android.R.id.home) {
+            onBackPressed();
+        }
+        return super.onOptionsItemSelected(menuItem);
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (!onBackPressedHook) {
+            Toast.makeText(this, "Press back again to exit.", Toast.LENGTH_SHORT).show();
+            onBackPressedHook = true;
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    onBackPressedHook = false;
+                }
+            }, 1000);
+        } else
+            finish();
     }
 
     @Override
@@ -199,8 +222,11 @@ public class ControllerActivity extends CircularRevealActivity {
                     progressLayout.setVisibility(View.GONE);
 
                     isConnected = result == AsyncSocketConnection.SocketConnectionResult.Success;
-
-                    if (!isConnected) {
+                    if (isConnected) {
+                        if (MainActivity.isPendingDataToSend())
+                            sendClipboardMessage(MainActivity.getPendingDataToSend());
+                    }
+                    else {
                         final Snackbar snackbar = Snackbar.make(coordinatorLayout, "Cannot connect.", Snackbar.LENGTH_INDEFINITE);
                         snackbar.setAction("Retry", new View.OnClickListener() {
                             @Override
@@ -236,6 +262,21 @@ public class ControllerActivity extends CircularRevealActivity {
         try {
             JSONObject object = new JSONObject();
             object.put("Action", "Goodbye");
+            AsyncSocketConnection.getInstance().runSocketConnection(ipNumber, portNumber, object.toString());
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+        finally {
+            isConnected = false;
+        }
+    }
+
+    public static void sendClipboardMessage(String data) {
+        try {
+            JSONObject object = new JSONObject();
+            object.put("Action", "Clipboard");
+            object.put("Data", data);
             AsyncSocketConnection.getInstance().runSocketConnection(ipNumber, portNumber, object.toString());
         }
         catch (Exception e) {
