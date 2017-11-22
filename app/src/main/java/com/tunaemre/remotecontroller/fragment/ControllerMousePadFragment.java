@@ -28,6 +28,7 @@ import com.tunaemre.remotecontroller.R;
 import com.tunaemre.remotecontroller.cache.Cache;
 import com.tunaemre.remotecontroller.hardware.Vibrate;
 import com.tunaemre.remotecontroller.listener.ScrollListener;
+import com.tunaemre.remotecontroller.model.AuthJSONObject;
 import com.tunaemre.remotecontroller.network.AsyncSocketConnection;
 
 import org.json.JSONObject;
@@ -276,11 +277,11 @@ public class ControllerMousePadFragment extends Fragment {
     private void sendScreenRecognizer()
     {
         try {
-            JSONObject object = new JSONObject();
+            AuthJSONObject object = new AuthJSONObject(activity.connectionModel.getToken());
             object.put("Action", "ScreenRecognize");
             object.put("X", touchpadWidth);
             object.put("Y", touchpadHeight);
-            AsyncSocketConnection.getInstance().runSocketConnection(activity.ipNumber, activity.portNumber, object.toString(), new AsyncSocketConnection.ResultListener() {
+            AsyncSocketConnection.getInstance().runSocketConnection(activity.connectionModel.ip, activity.connectionModel.port, object.toString(), new AsyncSocketConnection.ResultListener() {
 
                 @Override
                 public void onStart() {}
@@ -313,7 +314,7 @@ public class ControllerMousePadFragment extends Fragment {
         }
 
         try {
-            JSONObject object = new JSONObject();
+            AuthJSONObject object = new AuthJSONObject(activity.connectionModel.getToken());
             object.put("Action", "MouseDragRelative");
             object.put("Button", "Left");
             object.put("X", x - lastXPosition);
@@ -322,7 +323,7 @@ public class ControllerMousePadFragment extends Fragment {
             lastXPosition = x;
             lastYPosition = y;
 
-            AsyncSocketConnection.getInstance().runSocketConnection(activity.ipNumber, activity.portNumber, object.toString(), new AsyncSocketConnection.ResultListener() {
+            AsyncSocketConnection.getInstance().runSocketConnection(activity.connectionModel.ip, activity.connectionModel.port, object.toString(), new AsyncSocketConnection.ResultListener() {
                 @Override
                 public void onStart() {
                     activity.showCommandIndicator();
@@ -357,7 +358,7 @@ public class ControllerMousePadFragment extends Fragment {
         }
 
         try {
-            JSONObject object = new JSONObject();
+            AuthJSONObject object = new AuthJSONObject(activity.connectionModel.getToken());
             object.put("Action", "MouseMoveRelative");
             object.put("X", x - lastXPosition);
             object.put("Y",  y - lastYPosition);
@@ -365,7 +366,7 @@ public class ControllerMousePadFragment extends Fragment {
             lastXPosition = x;
             lastYPosition = y;
 
-            AsyncSocketConnection.getInstance().runSocketConnection(activity.ipNumber, activity.portNumber, object.toString(), new AsyncSocketConnection.ResultListener() {
+            AsyncSocketConnection.getInstance().runSocketConnection(activity.connectionModel.ip, activity.connectionModel.port, object.toString(), new AsyncSocketConnection.ResultListener() {
                 @Override
                 public void onStart() {
                     activity.showCommandIndicator();
@@ -395,11 +396,11 @@ public class ControllerMousePadFragment extends Fragment {
 
         try
         {
-            JSONObject object = new JSONObject();
+            AuthJSONObject object = new AuthJSONObject(activity.connectionModel.getToken());
             object.put("Action", "MouseClick");
             object.put("Button", button);
 
-            AsyncSocketConnection.getInstance().runSocketConnection(activity.ipNumber, activity.portNumber, object.toString(), new AsyncSocketConnection.ResultListener() {
+            AsyncSocketConnection.getInstance().runSocketConnection(activity.connectionModel.ip, activity.connectionModel.port, object.toString(), new AsyncSocketConnection.ResultListener() {
                 @Override
                 public void onStart() {
                     activity.showCommandIndicator();
@@ -428,12 +429,12 @@ public class ControllerMousePadFragment extends Fragment {
 
         try
         {
-            JSONObject object = new JSONObject();
+            AuthJSONObject object = new AuthJSONObject(activity.connectionModel.getToken());
             object.put("Action", "Scroll");
             object.put("Direction", direction);
             object.put("Amount", amount);
 
-            AsyncSocketConnection.getInstance().runSocketConnection(activity.ipNumber, activity.portNumber, object.toString(), new AsyncSocketConnection.ResultListener() {
+            AsyncSocketConnection.getInstance().runSocketConnection(activity.connectionModel.ip, activity.connectionModel.port, object.toString(), new AsyncSocketConnection.ResultListener() {
                 @Override
                 public void onStart() {
                     activity.showCommandIndicator();
@@ -462,11 +463,11 @@ public class ControllerMousePadFragment extends Fragment {
 
         try
         {
-            JSONObject object = new JSONObject();
+            AuthJSONObject object = new AuthJSONObject(activity.connectionModel.getToken());
             object.put("Action", "Text");
             object.put("Data", text);
 
-            AsyncSocketConnection.getInstance().runSocketConnection(activity.ipNumber, activity.portNumber, object.toString(), new AsyncSocketConnection.ResultListener() {
+            AsyncSocketConnection.getInstance().runSocketConnection(activity.connectionModel.ip, activity.connectionModel.port, object.toString(), new AsyncSocketConnection.ResultListener() {
                 @Override
                 public void onStart() {
                     activity.showCommandIndicator();

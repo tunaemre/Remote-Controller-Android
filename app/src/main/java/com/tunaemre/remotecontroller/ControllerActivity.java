@@ -17,11 +17,15 @@ import android.widget.Toast;
 import com.tunaemre.remotecontroller.fragment.ControllerGyroMouseFragment;
 import com.tunaemre.remotecontroller.fragment.ControllerMediaControlFragment;
 import com.tunaemre.remotecontroller.fragment.ControllerMousePadFragment;
+import com.tunaemre.remotecontroller.model.AuthJSONObject;
+import com.tunaemre.remotecontroller.model.ConnectionModel;
 import com.tunaemre.remotecontroller.network.AsyncSocketConnection;
+import com.tunaemre.remotecontroller.network.AuthenticationException;
 import com.tunaemre.remotecontroller.network.NetworkChangeReceiver;
 import com.tunaemre.remotecontroller.view.CircularRevealActivity;
 import com.tunaemre.remotecontroller.view.IExtendedAppCombatActivity;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 @IExtendedAppCombatActivity(theme = IExtendedAppCombatActivity.ActivityTheme.LIGHT, customToolBar = R.id.toolbar)
@@ -73,8 +77,7 @@ public class ControllerActivity extends CircularRevealActivity {
         }
     };
 
-    public static String ipNumber = null;
-    public static final int portNumber = 13000;
+    public static ConnectionModel connectionModel = null;
 
     public static boolean isConnected = false;
 
@@ -100,7 +103,7 @@ public class ControllerActivity extends CircularRevealActivity {
         super.onCreate(savedInstanceState);
         NetworkChangeReceiver.setNetworkListener(networkListener);
 
-        ipNumber = getIntent().getExtras().getString("ip");
+        connectionModel = (ConnectionModel) getIntent().getExtras().getSerializable("model");
 
         setContentView(R.layout.activity_controller);
 
@@ -208,7 +211,20 @@ public class ControllerActivity extends CircularRevealActivity {
         try {
             JSONObject object = new JSONObject();
             object.put("Action", "Hello");
-            AsyncSocketConnection.getInstance().runSocketConnection(ipNumber, portNumber, object.toString(), new AsyncSocketConnection.ResultListener() {
+            object.put("PIN", connectionModel.pin);
+            AsyncSocketConnection.getInstance().runSocketConnection(connectionModel.ip, connectionModel.port, object.toString(), new AsyncSocketConnection.InputStreamListener() {
+                @Override
+                public void onReceive(String data) throws AuthenticationException, JSONException {
+                    String token = null;
+                    JSONObject object = new JSONObject(data);
+                    if (object.getBoolean("Result")) {
+                        token = object.getString("Token");
+                        connectionModel.setToken(token);
+                    }
+                    else
+                        throw new AuthenticationException();
+                }
+            }, new AsyncSocketConnection.ResultListener() {
 
                 @Override
                 public void onStart() {
@@ -225,17 +241,30 @@ public class ControllerActivity extends CircularRevealActivity {
                     if (isConnected) {
                         if (MainActivity.isPendingDataToSend())
                             sendClipboardMessage(MainActivity.getPendingDataToSend());
-                    }
-                    else {
-                        final Snackbar snackbar = Snackbar.make(coordinatorLayout, "Cannot connect.", Snackbar.LENGTH_INDEFINITE);
-                        snackbar.setAction("Retry", new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-                                snackbar.dismiss();
-                                sendHelloMessage();
-                            }
-                        });
-                        snackbar.show();
+                    } else {
+                        if (result == AsyncSocketConnection.SocketConnectionResult.AuthError)
+                        {
+                            final Snackbar snackbar = Snackbar.make(coordinatorLayout, "Authentication error.", Snackbar.LENGTH_INDEFINITE);
+                            snackbar.setAction("Close", new View.OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+                                    snackbar.dismiss();
+                                }
+                            });
+                            snackbar.show();
+                        }
+                        else
+                        {
+                            final Snackbar snackbar = Snackbar.make(coordinatorLayout, "Cannot connect.", Snackbar.LENGTH_INDEFINITE);
+                            snackbar.setAction("Retry", new View.OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+                                    snackbar.dismiss();
+                                    sendHelloMessage();
+                                }
+                            });
+                            snackbar.show();
+                        }
                     }
                 }
             });
@@ -262,7 +291,7 @@ public class ControllerActivity extends CircularRevealActivity {
         try {
             JSONObject object = new JSONObject();
             object.put("Action", "Goodbye");
-            AsyncSocketConnection.getInstance().runSocketConnection(ipNumber, portNumber, object.toString());
+            AsyncSocketConnection.getInstance().runSocketConnection(connectionModel.ip, connectionModel.port, object.toString());
         }
         catch (Exception e) {
             e.printStackTrace();
@@ -274,10 +303,10 @@ public class ControllerActivity extends CircularRevealActivity {
 
     public static void sendClipboardMessage(String data) {
         try {
-            JSONObject object = new JSONObject();
+            AuthJSONObject object = new AuthJSONObject(connectionModel.getToken());
             object.put("Action", "Clipboard");
             object.put("Data", data);
-            AsyncSocketConnection.getInstance().runSocketConnection(ipNumber, portNumber, object.toString());
+            AsyncSocketConnection.getInstance().runSocketConnection(connectionModel.ip, connectionModel.port, object.toString());
         }
         catch (Exception e) {
             e.printStackTrace();
