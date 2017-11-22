@@ -55,22 +55,23 @@ public class MainQRReaderFragment extends Fragment {
         if (requestCode == PermissionOperator.REQUEST_CAMERA_PERMISSION)
         {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED)
-                onShow();
+                prepareFragment();
             else
                 Snackbar.make(getActivity().findViewById(R.id.coordinator), "Camera permission should be granted.", Snackbar.LENGTH_LONG).setAction("Retry", new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        onShow();
+                        prepareFragment();
                     }
                 }).show();
         }
     }
 
-    public void onShow() {
-
-    }
-
-    private void prepareFragment() {
+    public void prepareFragment() {
+        if (!permissionOperator.isCameraPermissionGranded(getContext()))
+        {
+            permissionOperator.requestCameraPermission(getActivity());
+            return;
+        }
         final BarcodeCapture barcodeCapture = (BarcodeCapture)getChildFragmentManager().findFragmentById(R.id.barcode_reader);
 
         if (barcodeCapture != null) {
@@ -86,7 +87,7 @@ public class MainQRReaderFragment extends Fragment {
 
                         Intent intent = new Intent(getActivity(), ControllerActivity.class);
                         intent.putExtra("model", new ConnectionModel(barcodeObj));
-                        startActivity(intent);
+                        getActivity().startActivityForResult(intent, MainActivity.CONNECTION_REQUEST_CODE);
                     }
                     catch (Exception e)
                     {

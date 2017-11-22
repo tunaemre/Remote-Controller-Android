@@ -2,5 +2,6 @@
     <string name="app_name">Remote Controller</string>
     <string name="title_connect">Connect</string>
     <string name="title_calibration">Calibration</string>
+    <string name="title_quickconnect">Quick Connect</string>
     <string name="action_intent_sendclipboard">Copy to PC Clipboard</string>
 </resources>

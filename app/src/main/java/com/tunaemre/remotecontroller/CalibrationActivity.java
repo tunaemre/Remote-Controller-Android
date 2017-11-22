@@ -35,7 +35,6 @@ public class CalibrationActivity extends ExtendedAppCombatActivity {
 
     private int currentStep = 0;
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

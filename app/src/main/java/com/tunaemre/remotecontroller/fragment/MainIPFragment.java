@@ -14,6 +14,7 @@ import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import com.tunaemre.remotecontroller.ControllerActivity;
+import com.tunaemre.remotecontroller.MainActivity;
 import com.tunaemre.remotecontroller.R;
 import com.tunaemre.remotecontroller.model.ConnectionModel;
 
@@ -62,7 +63,7 @@ public class MainIPFragment extends Fragment {
 
                 Intent intent = new Intent(getActivity(), ControllerActivity.class);
                 intent.putExtra("model", model);
-                startActivity(intent);
+                getActivity().startActivityForResult(intent, MainActivity.CONNECTION_REQUEST_CODE);
             }
         });
     }

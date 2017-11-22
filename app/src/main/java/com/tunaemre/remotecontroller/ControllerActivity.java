@@ -1,5 +1,6 @@
 package com.tunaemre.remotecontroller;
 
+import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
@@ -14,6 +15,7 @@ import android.view.View;
 import android.view.animation.AnimationUtils;
 import android.widget.Toast;
 
+import com.tunaemre.remotecontroller.cache.Cache;
 import com.tunaemre.remotecontroller.fragment.ControllerGyroMouseFragment;
 import com.tunaemre.remotecontroller.fragment.ControllerMediaControlFragment;
 import com.tunaemre.remotecontroller.fragment.ControllerMousePadFragment;
@@ -140,7 +142,14 @@ public class ControllerActivity extends CircularRevealActivity {
                 }
             }, 1000);
         } else
+        {
+            if (isConnected)
+                setResult(Activity.RESULT_OK);
+            else
+                setResult(Activity.RESULT_CANCELED);
+
             finish();
+        }
     }
 
     @Override
@@ -239,6 +248,7 @@ public class ControllerActivity extends CircularRevealActivity {
 
                     isConnected = result == AsyncSocketConnection.SocketConnectionResult.Success;
                     if (isConnected) {
+                        Cache.getInstance(getBaseContext()).setLastConnection(connectionModel);
                         if (MainActivity.isPendingDataToSend())
                             sendClipboardMessage(MainActivity.getPendingDataToSend());
                     } else {

@@ -31,8 +31,6 @@ import com.tunaemre.remotecontroller.listener.ScrollListener;
 import com.tunaemre.remotecontroller.model.AuthJSONObject;
 import com.tunaemre.remotecontroller.network.AsyncSocketConnection;
 
-import org.json.JSONObject;
-
 public class ControllerMousePadFragment extends Fragment {
 
     private ControllerActivity activity = null;
@@ -88,7 +86,30 @@ public class ControllerMousePadFragment extends Fragment {
         editText = (EditText) layout.findViewById(R.id.editText);
         fab = (FloatingActionButton) layout.findViewById(R.id.floatingActionButton);
 
-        new GetTouchpadSizeService(layout.findViewById(R.id.touchpadLayout)).execute();
+        touchpadWidth = touchpadLayout.getMeasuredWidth();
+        touchpadHeight= touchpadLayout.getMeasuredHeight();
+
+        if (touchpadWidth == 0 || touchpadWidth == 0)
+        {
+            ViewTreeObserver viewTree = touchpadLayout.getViewTreeObserver();
+            viewTree.addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener()
+            {
+                @Override
+                public boolean onPreDraw()
+                {
+                    touchpadWidth = touchpadLayout.getMeasuredHeight();
+                    touchpadHeight = touchpadLayout.getMeasuredWidth();
+
+                    if (touchpadWidth > 0 && touchpadHeight > 0){
+                        touchPadListener();
+                        return true;
+                    }
+                    return false;
+                }
+            });
+        }
+        else
+            touchPadListener();
     }
 
     private void touchPadListener()
@@ -481,49 +502,6 @@ public class ControllerMousePadFragment extends Fragment {
         }
         catch (Exception e) {
             e.printStackTrace();
-        }
-    }
-
-    private class GetTouchpadSizeService
-    {
-        private View mTouchpad;
-
-        GetTouchpadSizeService(View touchpad) {
-            this.mTouchpad = touchpad;
-        }
-
-        public void execute()
-        {
-            new touchpadSizeTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-        }
-
-        private class touchpadSizeTask extends AsyncTask<Void, Void, Boolean>
-        {
-            protected Boolean doInBackground(Void... params)
-            {
-                ViewTreeObserver viewTree = mTouchpad.getViewTreeObserver();
-                viewTree.addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener()
-                {
-                    @Override
-                    public boolean onPreDraw()
-                    {
-                        touchpadWidth = mTouchpad.getMeasuredHeight();
-                        touchpadHeight = mTouchpad.getMeasuredWidth();
-
-                        return (touchpadWidth != 0 && touchpadHeight != 0);
-                    }
-                });
-
-                return false;
-            }
-
-            protected void onPostExecute(Boolean result)
-            {
-                if (touchpadWidth == 0 || touchpadHeight == 0)
-                    execute();
-                else
-                    touchPadListener();
-            }
         }
     }
 

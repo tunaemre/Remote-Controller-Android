@@ -127,31 +127,28 @@ public class AsyncSocketConnection {
                 try {
                     outputStream.write(mData.getBytes());
                     outputStream.flush();
-                    outputStream.close();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    return SocketConnectionResult.DataTransmitError;
-                }
 
-                try {
                     if (mInputStreamListener != null && inputStream != null)
                     {
                         BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
                         StringBuilder response = new StringBuilder();
-                        String line;
-                        while ((line = bufferedReader.readLine()) != null) {
-                            response.append(line).append('\n');
+
+                        int charsRead = 0;
+                        char[] buffer = new char[512];
+                        while ((charsRead = bufferedReader.read(buffer)) != -1) {
+                            response.append(new String(buffer).substring(0, charsRead));
                         }
 
-                        inputStream.close();
                         mInputStreamListener.onReceive(response.toString());
+
+                        inputStream.close();
                     }
-                }
-                catch (AuthenticationException e) {
+
+                    outputStream.close();
+                } catch (AuthenticationException e) {
                     e.printStackTrace();
                     return SocketConnectionResult.AuthError;
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                     e.printStackTrace();
                     return SocketConnectionResult.DataTransmitError;
                 }

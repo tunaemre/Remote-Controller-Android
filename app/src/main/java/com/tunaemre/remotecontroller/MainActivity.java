@@ -1,5 +1,6 @@
 package com.tunaemre.remotecontroller;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
@@ -28,7 +29,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 @IExtendedAppCombatActivity(theme = IExtendedAppCombatActivity.ActivityTheme.LIGHT, customToolBar = R.id.toolbar, titleRes = R.string.title_connect)
-public class MainActivity extends ExtendedAppCombatActivity {
+public class MainActivity extends ExtendedAppCombatActivity
+{
+    public static int CONNECTION_REQUEST_CODE = 99;
 
     private CoordinatorLayout coordinatorLayout;
     private ViewPager viewPager;
@@ -80,6 +83,9 @@ public class MainActivity extends ExtendedAppCombatActivity {
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
 
         prepareActivity();
+
+        if (Cache.getInstance(this).getLastConnection() != null)
+            startActivity(new Intent(this, QuickConnectActivity.class));
     }
 
     @Override
@@ -87,6 +93,14 @@ public class MainActivity extends ExtendedAppCombatActivity {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.menu_main, menu);
         return true;
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == CONNECTION_REQUEST_CODE && requestCode == Activity.RESULT_OK) {
+            if (Cache.getInstance(this).getLastConnection() != null)
+                startActivity(new Intent(this, QuickConnectActivity.class));
+        }
     }
 
     @Override
@@ -133,7 +147,7 @@ public class MainActivity extends ExtendedAppCombatActivity {
                         navigation.setSelectedItemId(R.id.navigation_ip);
                         break;
                     case 1:
-                        ((MainQRReaderFragment)viewPagerAdapter.getFragmentList().get(position)).onShow();
+                        ((MainQRReaderFragment)viewPagerAdapter.getFragmentList().get(position)).prepareFragment();
                         navigation.setSelectedItemId(R.id.navigation_qrreader);
                         break;
                 }
