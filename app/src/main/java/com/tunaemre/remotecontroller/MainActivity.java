@@ -1,17 +1,16 @@
 package com.tunaemre.remotecontroller;
 
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.view.ViewPager;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -19,18 +18,22 @@ import android.view.View;
 
 import com.tunaemre.remotecontroller.cache.Cache;
 import com.tunaemre.remotecontroller.fragment.MainIPFragment;
-import com.tunaemre.remotecontroller.fragment.MainQRFragment;
+import com.tunaemre.remotecontroller.fragment.MainQRReaderFragment;
 import com.tunaemre.remotecontroller.network.NetworkChangeReceiver;
 import com.tunaemre.remotecontroller.operator.PermissionOperator;
 import com.tunaemre.remotecontroller.view.ExtendedAppCombatActivity;
 import com.tunaemre.remotecontroller.view.IExtendedAppCombatActivity;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @IExtendedAppCombatActivity(theme = IExtendedAppCombatActivity.ActivityTheme.LIGHT, customToolBar = R.id.toolbar, titleRes = R.string.title_connect)
 public class MainActivity extends ExtendedAppCombatActivity {
 
-    private static PermissionOperator permissionOperator = new PermissionOperator();
-
     private CoordinatorLayout coordinatorLayout;
+    private ViewPager viewPager;
+    private ViewPagerAdapter viewPagerAdapter;
+    private BottomNavigationView navigation;
 
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
@@ -39,10 +42,10 @@ public class MainActivity extends ExtendedAppCombatActivity {
         public boolean onNavigationItemSelected(@NonNull MenuItem item) {
             switch (item.getItemId()) {
                 case R.id.navigation_ip:
-                    prepareIPFragment();
+                    viewPager.setCurrentItem(0, true);
                     return true;
-                case R.id.navigation_qr:
-                    prepareQRFragment();
+                case R.id.navigation_qrreader:
+                    viewPager.setCurrentItem(1, true);
                     return true;
             }
             return false;
@@ -71,8 +74,9 @@ public class MainActivity extends ExtendedAppCombatActivity {
         setContentView(R.layout.activity_main);
 
         coordinatorLayout = (CoordinatorLayout) findViewById(R.id.coordinator);
+        viewPager = (ViewPager) findViewById(R.id.viewPager);
 
-        BottomNavigationView navigation = (BottomNavigationView) findViewById(R.id.navigation);
+        navigation = (BottomNavigationView) findViewById(R.id.navigation);
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
 
         prepareActivity();
@@ -113,7 +117,31 @@ public class MainActivity extends ExtendedAppCombatActivity {
 
     @Override
     protected void prepareActivity() {
-        prepareIPFragment();
+        final ViewPagerAdapter viewPagerAdapter = new ViewPagerAdapter(getSupportFragmentManager());
+        viewPagerAdapter.addFragment(new MainIPFragment());
+        viewPagerAdapter.addFragment(new MainQRReaderFragment());
+        viewPager.setAdapter(viewPagerAdapter);
+        viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) { }
+
+            @Override
+            public void onPageSelected(int position) {
+                switch (position)
+                {
+                    case 0:
+                        navigation.setSelectedItemId(R.id.navigation_ip);
+                        break;
+                    case 1:
+                        ((MainQRReaderFragment)viewPagerAdapter.getFragmentList().get(position)).onShow();
+                        navigation.setSelectedItemId(R.id.navigation_qrreader);
+                        break;
+                }
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {}
+        });
 
         if (!NetworkChangeReceiver.checkWifiConnection(getApplicationContext())) {
             final Snackbar snackbar = Snackbar.make(coordinatorLayout, "Please check your wifi connection.", Snackbar.LENGTH_INDEFINITE);
@@ -132,34 +160,38 @@ public class MainActivity extends ExtendedAppCombatActivity {
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        if (requestCode == PermissionOperator.REQUEST_CAMERA_PERMISSION)
+        for (Fragment fragment : viewPagerAdapter.getFragmentList())
+            fragment.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    }
+
+    private class ViewPagerAdapter extends FragmentPagerAdapter
+    {
+        private final List<Fragment> mFragmentList = new ArrayList<>();
+
+        public ViewPagerAdapter(FragmentManager manager)
         {
-            if (grantResults[0] == PackageManager.PERMISSION_GRANTED)
-                prepareQRFragment();
-            else
-                Snackbar.make(coordinatorLayout, "Camera permission should be granted.", Snackbar.LENGTH_LONG).setAction("Retry", new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        prepareQRFragment();
-                    }
-                }).show();
-        }
-    }
-
-    private void prepareIPFragment() {
-        MainIPFragment mIPFragment = new MainIPFragment();
-        getSupportFragmentManager().beginTransaction().replace(R.id.frame, mIPFragment).commitAllowingStateLoss();
-    }
-
-    private void prepareQRFragment() {
-        if (permissionOperator.isCameraPermissionGranded(this)) {
-            MainQRFragment mQRFragment = new MainQRFragment();
-            getSupportFragmentManager().beginTransaction().replace(R.id.frame, mQRFragment).commitAllowingStateLoss();
-        }
-        else {
-            getSupportFragmentManager().beginTransaction().replace(R.id.frame, new Fragment()).commitAllowingStateLoss();
-            permissionOperator.requestCameraPermission(this);
+            super(manager);
         }
 
+        @Override
+        public Fragment getItem(int position)
+        {
+            return mFragmentList.get(position);
+        }
+
+        @Override
+        public int getCount()
+        {
+            return mFragmentList.size();
+        }
+
+        public void addFragment(Fragment fragment)
+        {
+            mFragmentList.add(fragment);
+        }
+
+        public List<Fragment> getFragmentList() {
+            return mFragmentList;
+        }
     }
 }

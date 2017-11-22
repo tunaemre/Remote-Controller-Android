@@ -129,6 +129,7 @@ public class AsyncSocketConnection {
                     outputStream.flush();
                     outputStream.close();
                 } catch (Exception e) {
+                    e.printStackTrace();
                     return SocketConnectionResult.DataTransmitError;
                 }
 
@@ -147,9 +148,11 @@ public class AsyncSocketConnection {
                     }
                 }
                 catch (AuthenticationException e) {
+                    e.printStackTrace();
                     return SocketConnectionResult.AuthError;
                 }
                 catch (Exception e) {
+                    e.printStackTrace();
                     return SocketConnectionResult.DataTransmitError;
                 }
 
