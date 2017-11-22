@@ -1,8 +1,10 @@
 package com.tunaemre.remotecontroller;
 
+import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
 import android.support.design.widget.CoordinatorLayout;
@@ -11,19 +13,27 @@ import android.support.v7.app.AlertDialog;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.animation.AnimationUtils;
+import android.widget.Toast;
 
+import com.tunaemre.remotecontroller.cache.Cache;
 import com.tunaemre.remotecontroller.fragment.ControllerGyroMouseFragment;
 import com.tunaemre.remotecontroller.fragment.ControllerMediaControlFragment;
 import com.tunaemre.remotecontroller.fragment.ControllerMousePadFragment;
+import com.tunaemre.remotecontroller.model.AuthJSONObject;
+import com.tunaemre.remotecontroller.model.ConnectionModel;
 import com.tunaemre.remotecontroller.network.AsyncSocketConnection;
+import com.tunaemre.remotecontroller.network.AuthenticationException;
 import com.tunaemre.remotecontroller.network.NetworkChangeReceiver;
 import com.tunaemre.remotecontroller.view.CircularRevealActivity;
 import com.tunaemre.remotecontroller.view.IExtendedAppCombatActivity;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 @IExtendedAppCombatActivity(theme = IExtendedAppCombatActivity.ActivityTheme.LIGHT, customToolBar = R.id.toolbar)
 public class ControllerActivity extends CircularRevealActivity {
+
+    private boolean onBackPressedHook = false;
 
     private CoordinatorLayout coordinatorLayout;
     private View progressLayout;
@@ -69,10 +79,9 @@ public class ControllerActivity extends CircularRevealActivity {
         }
     };
 
-    public String ipNumber = null;
-    public final int portNumber = 13000;
+    public static ConnectionModel connectionModel = null;
 
-    public boolean isConnected = false;
+    public static boolean isConnected = false;
 
     private View imgCommandIndicator = null;
     private int commandIndicatorVisibility = 0;
@@ -96,12 +105,12 @@ public class ControllerActivity extends CircularRevealActivity {
         super.onCreate(savedInstanceState);
         NetworkChangeReceiver.setNetworkListener(networkListener);
 
-        ipNumber = getIntent().getExtras().getString("ip");
+        connectionModel = (ConnectionModel) getIntent().getExtras().getSerializable("model");
 
         setContentView(R.layout.activity_controller);
 
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        getSupportActionBar().setDisplayShowTitleEnabled(true);
+        getSupportActionBar().setDisplayShowHomeEnabled(false);
 
         coordinatorLayout = (CoordinatorLayout) findViewById(R.id.coordinator);
         progressLayout =  findViewById(R.id.layoutProgress);
@@ -111,6 +120,36 @@ public class ControllerActivity extends CircularRevealActivity {
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
 
         prepareActivity();
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem menuItem) {
+        if (menuItem.getItemId() == android.R.id.home) {
+            onBackPressed();
+        }
+        return super.onOptionsItemSelected(menuItem);
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (!onBackPressedHook) {
+            Toast.makeText(this, "Press back again to exit.", Toast.LENGTH_SHORT).show();
+            onBackPressedHook = true;
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    onBackPressedHook = false;
+                }
+            }, 1000);
+        } else
+        {
+            if (isConnected)
+                setResult(Activity.RESULT_OK);
+            else
+                setResult(Activity.RESULT_CANCELED);
+
+            finish();
+        }
     }
 
     @Override
@@ -181,7 +220,20 @@ public class ControllerActivity extends CircularRevealActivity {
         try {
             JSONObject object = new JSONObject();
             object.put("Action", "Hello");
-            AsyncSocketConnection.getInstance(getBaseContext()).runSocketConnection(ipNumber, portNumber, object.toString(), new AsyncSocketConnection.ResultListener() {
+            object.put("PIN", connectionModel.pin);
+            AsyncSocketConnection.getInstance().runSocketConnection(connectionModel.ip, connectionModel.port, object.toString(), new AsyncSocketConnection.InputStreamListener() {
+                @Override
+                public void onReceive(String data) throws AuthenticationException, JSONException {
+                    String token = null;
+                    JSONObject object = new JSONObject(data);
+                    if (object.getBoolean("Result")) {
+                        token = object.getString("Token");
+                        connectionModel.setToken(token);
+                    }
+                    else
+                        throw new AuthenticationException();
+                }
+            }, new AsyncSocketConnection.ResultListener() {
 
                 @Override
                 public void onStart() {
@@ -195,17 +247,34 @@ public class ControllerActivity extends CircularRevealActivity {
                     progressLayout.setVisibility(View.GONE);
 
                     isConnected = result == AsyncSocketConnection.SocketConnectionResult.Success;
-
-                    if (!isConnected) {
-                        final Snackbar snackbar = Snackbar.make(coordinatorLayout, "Cannot connect.", Snackbar.LENGTH_INDEFINITE);
-                        snackbar.setAction("Retry", new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-                                snackbar.dismiss();
-                                sendHelloMessage();
-                            }
-                        });
-                        snackbar.show();
+                    if (isConnected) {
+                        Cache.getInstance(getBaseContext()).setLastConnection(connectionModel);
+                        if (MainActivity.isPendingDataToSend())
+                            sendClipboardMessage(MainActivity.getPendingDataToSend());
+                    } else {
+                        if (result == AsyncSocketConnection.SocketConnectionResult.AuthError)
+                        {
+                            final Snackbar snackbar = Snackbar.make(coordinatorLayout, "Authentication error.", Snackbar.LENGTH_INDEFINITE);
+                            snackbar.setAction("Close", new View.OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+                                    snackbar.dismiss();
+                                }
+                            });
+                            snackbar.show();
+                        }
+                        else
+                        {
+                            final Snackbar snackbar = Snackbar.make(coordinatorLayout, "Cannot connect.", Snackbar.LENGTH_INDEFINITE);
+                            snackbar.setAction("Retry", new View.OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+                                    snackbar.dismiss();
+                                    sendHelloMessage();
+                                }
+                            });
+                            snackbar.show();
+                        }
                     }
                 }
             });
@@ -232,7 +301,22 @@ public class ControllerActivity extends CircularRevealActivity {
         try {
             JSONObject object = new JSONObject();
             object.put("Action", "Goodbye");
-            AsyncSocketConnection.getInstance(getBaseContext()).runSocketConnection(ipNumber, portNumber, object.toString());
+            AsyncSocketConnection.getInstance().runSocketConnection(connectionModel.ip, connectionModel.port, object.toString());
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+        finally {
+            isConnected = false;
+        }
+    }
+
+    public static void sendClipboardMessage(String data) {
+        try {
+            AuthJSONObject object = new AuthJSONObject(connectionModel.getToken());
+            object.put("Action", "Clipboard");
+            object.put("Data", data);
+            AsyncSocketConnection.getInstance().runSocketConnection(connectionModel.ip, connectionModel.port, object.toString());
         }
         catch (Exception e) {
             e.printStackTrace();

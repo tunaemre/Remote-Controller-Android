@@ -4,10 +4,10 @@
     <item
         android:id="@+id/navigation_ip"
         android:icon="@drawable/ic_wifi_tethering_black_24px"
-        android:title="IP Number" />
+        android:title="IP Address" />
 
     <item
-        android:id="@+id/navigation_qr"
+        android:id="@+id/navigation_qrreader"
         android:icon="@drawable/ic_camera_alt_black_24px"
         android:title="Scan QR Code" />
 
