@@ -4,13 +4,11 @@ package com.tunaemre.remotecontroller.fragment;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.EditText;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
@@ -20,7 +18,7 @@ import com.google.android.gms.samples.vision.barcodereader.BarcodeRetriever;
 import com.google.android.gms.vision.barcode.Barcode;
 import com.tunaemre.remotecontroller.ControllerActivity;
 import com.tunaemre.remotecontroller.R;
-import com.tunaemre.remotecontroller.operator.PermissionOperator;
+import com.tunaemre.remotecontroller.model.ConnectionModel;
 
 import org.json.JSONObject;
 
@@ -56,8 +54,9 @@ public class MainQRFragment extends Fragment {
                     try
                     {
                         JSONObject barcodeObj = new JSONObject(barcodeData);
+
                         Intent intent = new Intent(getActivity(), ControllerActivity.class);
-                        intent.putExtra("ip", barcodeObj.getString("IP"));
+                        intent.putExtra("model", new ConnectionModel(barcodeObj));
                         startActivity(intent);
                     }
                     catch (Exception e)

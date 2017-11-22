@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,6 +15,7 @@ import android.widget.Toast;
 
 import com.tunaemre.remotecontroller.ControllerActivity;
 import com.tunaemre.remotecontroller.R;
+import com.tunaemre.remotecontroller.model.ConnectionModel;
 
 import java.util.regex.Pattern;
 
@@ -38,17 +40,28 @@ public class MainIPFragment extends Fragment {
 
     private void prepareFragment(RelativeLayout layout) {
         final EditText editIP = (EditText) layout.findViewById(R.id.editIP);
+        final EditText editPIN = (EditText) layout.findViewById(R.id.editPIN);
         FloatingActionButton fab = (FloatingActionButton) layout.findViewById(R.id.floatingActionButton);
 
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (!Pattern.compile(IP_ADDRESS_PATTERN).matcher(editIP.getText().toString()).matches()) {
-                    Toast.makeText(getContext(), "Invalid IP Address.", Toast.LENGTH_LONG).show();
+                    Toast.makeText(getContext(), "Invalid IP address.", Toast.LENGTH_LONG).show();
                     return;
                 }
+                if (TextUtils.isEmpty(editPIN.getText().toString())) {
+                    Toast.makeText(getContext(), "Enter PIN code.", Toast.LENGTH_LONG).show();
+                    return;
+                }
+
+                ConnectionModel model = new ConnectionModel();
+                model.ip = editIP.getText().toString();
+                model.pin = editPIN.getText().toString();
+                model.port = 13000;
+
                 Intent intent = new Intent(getActivity(), ControllerActivity.class);
-                intent.putExtra("ip", editIP.getText().toString());
+                intent.putExtra("model", model);
                 startActivity(intent);
             }
         });
